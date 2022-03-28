@@ -23,15 +23,29 @@ services:
     volumes: 
       - redis_data:/var/lib/redis
 
-  go:
+  golang:
     container_name: golang
     build:
       context: .
     ports:
       - "8080:8080"
     depends_on:
-      - "postgres"
+      - postgres
+
+  prometheus:
+    image: prom/prometheus:v2.34.0
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - 9090:9090
+    depends_on:
+      - golang
+    volumes:
+      - ./docker/prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus/
 
 volumes:
   postgres_data: 
   redis_data: 
+  prometheus_data:
