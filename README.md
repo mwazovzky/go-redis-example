@@ -1,4 +1,4 @@
-# GO POSTGRES EXAMPLE
+# GO REDIS EXAMPLE
 
 ## PostgeSQL cli
 

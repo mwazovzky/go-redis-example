@@ -27,14 +27,14 @@ func main() {
 	db := connectDB()
 	defer db.Close()
 
-	connectRedis()
+	cache := connectRedis()
 
 	port := ":8080"
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", Homepage)
 
-	apiHandlers := handlers.NewApiHandlers(db)
+	apiHandlers := handlers.NewApiHandlers(db, cache)
 	api := router.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/users", apiHandlers.Users).Methods(http.MethodGet)
 	api.HandleFunc("/balances", apiHandlers.Balances).Methods(http.MethodGet)

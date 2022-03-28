@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
+
+	"github.com/go-redis/redis"
 )
 
 type User struct {
@@ -18,11 +21,12 @@ type Balance struct {
 }
 
 type ApiHandlers struct {
-	db *sql.DB
+	db    *sql.DB
+	cache *redis.Client
 }
 
-func NewApiHandlers(db *sql.DB) *ApiHandlers {
-	return &ApiHandlers{db}
+func NewApiHandlers(db *sql.DB, cache *redis.Client) *ApiHandlers {
+	return &ApiHandlers{db, cache}
 }
 
 func (h *ApiHandlers) Users(rw http.ResponseWriter, r *http.Request) {
@@ -43,9 +47,10 @@ func (h *ApiHandlers) Users(rw http.ResponseWriter, r *http.Request) {
 func (h *ApiHandlers) Balances(rw http.ResponseWriter, r *http.Request) {
 	log.Println("Query Request")
 
-	res, err := getBalances(h.db)
+	res, err := getBalances(h.db, h.cache)
 	if err != nil {
 		http.Error(rw, "Unable to get balances", http.StatusInternalServerError)
+		return
 	}
 
 	rw.Header().Add("Content-Type", "application/json")
@@ -76,14 +81,30 @@ func getUsers(db *sql.DB) []User {
 	return users
 }
 
-func getBalances(db *sql.DB) ([]byte, error) {
+func getBalances(db *sql.DB, cache *redis.Client) ([]byte, error) {
+	var data []byte
+	key := "balances"
+	exp := 30 * time.Second
+
+	value, err := cache.Get(key).Result()
+	if err == nil {
+		log.Println("Balances loaded from cache")
+		return []byte(value), nil
+	}
+
 	balances := loadBalances(db)
 
-	data, err := json.Marshal(balances)
+	data, err = json.Marshal(balances)
 	if err != nil {
 		return data, err
 	}
 
+	err = cache.Set(key, string(data), exp).Err()
+	if err != nil {
+		return data, err
+	}
+
+	log.Println("Balances loaded from db")
 	return data, nil
 }
 
