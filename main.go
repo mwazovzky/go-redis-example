@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 
@@ -25,6 +26,8 @@ type User struct {
 func main() {
 	db := connectDB()
 	defer db.Close()
+
+	connectRedis()
 
 	port := ":8080"
 	router := mux.NewRouter()
@@ -84,7 +87,24 @@ func connectDB() *sql.DB {
 		panic(err)
 	}
 
-	fmt.Println("Connected")
+	fmt.Println("Connected to db")
 
 	return db
+}
+
+func connectRedis() *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr:     "redis:6379",
+		Password: "",
+		DB:       0,
+	})
+
+	_, err := client.Ping().Result()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Connected to redis")
+
+	return client
 }
