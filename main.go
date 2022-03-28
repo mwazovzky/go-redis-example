@@ -34,6 +34,7 @@ func main() {
 	apiHandlers := handlers.NewApiHandlers(db)
 	api := router.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/users", apiHandlers.Users).Methods(http.MethodGet)
+	api.HandleFunc("/balances", apiHandlers.Balances).Methods(http.MethodGet)
 
 	server := &http.Server{
 		Addr:         port,
