@@ -15,7 +15,7 @@ services:
       - ./docker/postgres/init:/docker-entrypoint-initdb.d
 
   go:
-    container_name: go
+    container_name: golang
     build:
       context: .
     ports:
