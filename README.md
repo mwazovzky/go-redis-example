@@ -12,7 +12,7 @@ psql -U user testdb
 ## Seed fake data
 
 ```
-docker exec -it go-redis-example-go-1 go run cmd/seeder/main.go
+docker exec -it golang go run cmd/seeder/main.go
 ```
 
 ## Redis cli

@@ -18,12 +18,15 @@ import (
 	"go-redis-example/http/handlers"
 	"go-redis-example/http/middleware"
 
+	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-type User struct {
-	Name  string
-	Email string
+var port string
+
+func init() {
+	godotenv.Load()
+	port = fmt.Sprintf(":%s", os.Getenv("PORT"))
 }
 
 func main() {
@@ -77,15 +80,15 @@ func Homepage(rw http.ResponseWriter, r *http.Request) {
 }
 
 func connectDB() *sql.DB {
-	dbhost := "postgres"
-	dbport := 5432
-	dbuser := "user"
-	dbpassword := "secret"
-	dbname := "testdb"
+	dbhost := os.Getenv("DB_HOST")
+	dbport := os.Getenv("DB_PORT")
+	dbuser := os.Getenv("DB_USER")
+	dbpassword := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
 
-	conn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", dbhost, dbport, dbuser, dbpassword, dbname)
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbhost, dbport, dbuser, dbpassword, dbname)
 
-	db, err := sql.Open("postgres", conn)
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		panic(err)
 	}
@@ -101,8 +104,13 @@ func connectDB() *sql.DB {
 }
 
 func connectRedis() *redis.Client {
+	host := os.Getenv("REDIS_HOST")
+	port := os.Getenv("REDIS_PORT")
+
+	addr := fmt.Sprintf("%s:%s", host, port)
+
 	client := redis.NewClient(&redis.Options{
-		Addr:     "redis:6379",
+		Addr:     addr,
 		Password: "",
 		DB:       0,
 	})

@@ -3,11 +3,17 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 
 	"go-redis-example/seeders"
 )
+
+func init() {
+	godotenv.Load()
+}
 
 func main() {
 	db := connectDB()
@@ -33,15 +39,15 @@ func main() {
 }
 
 func connectDB() *sql.DB {
-	dbhost := "postgres"
-	dbport := 5432
-	dbuser := "user"
-	dbpassword := "secret"
-	dbname := "testdb"
+	dbhost := os.Getenv("DB_HOST")
+	dbport := os.Getenv("DB_PORT")
+	dbuser := os.Getenv("DB_USER")
+	dbpassword := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
 
-	conn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", dbhost, dbport, dbuser, dbpassword, dbname)
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbhost, dbport, dbuser, dbpassword, dbname)
 
-	db, err := sql.Open("postgres", conn)
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		panic(err)
 	}
