@@ -15,7 +15,10 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 
-	"go-redis-example/handlers"
+	"go-redis-example/http/handlers"
+	"go-redis-example/http/middleware"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type User struct {
@@ -32,6 +35,8 @@ func main() {
 	port := ":8080"
 	router := mux.NewRouter()
 
+	router.Handle("/metrics", promhttp.Handler())
+
 	router.HandleFunc("/", Homepage)
 
 	apiHandlers := handlers.NewApiHandlers(db, cache)
@@ -39,6 +44,8 @@ func main() {
 	api.HandleFunc("/users", apiHandlers.Users).Methods(http.MethodGet)
 	api.HandleFunc("/balances", apiHandlers.Balances).Methods(http.MethodGet)
 	api.HandleFunc("/clear", apiHandlers.Clear).Methods(http.MethodGet)
+
+	router.Use(middleware.NewMetricsMiddleware().Metrics)
 
 	server := &http.Server{
 		Addr:         port,
