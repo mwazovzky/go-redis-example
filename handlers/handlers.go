@@ -25,6 +25,11 @@ type ApiHandlers struct {
 	cache *redis.Client
 }
 
+const (
+	key string        = "balances"
+	exp time.Duration = 30 * time.Second
+)
+
 func NewApiHandlers(db *sql.DB, cache *redis.Client) *ApiHandlers {
 	return &ApiHandlers{db, cache}
 }
@@ -60,6 +65,32 @@ func (h *ApiHandlers) Balances(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *ApiHandlers) Clear(rw http.ResponseWriter, r *http.Request) {
+	log.Println("Clear Cache Request")
+
+	_, err := h.cache.Del(key).Result()
+	if err != nil {
+		http.Error(rw, "Unable clear cache", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Add("Content-Type", "application/json")
+	res := struct {
+		Status  int
+		Message string
+	}{
+		Status:  200,
+		Message: "Cache has been cleared",
+	}
+
+	encoder := json.NewEncoder(rw)
+	err = encoder.Encode(res)
+
+	if err != nil {
+		http.Error(rw, "Unable to write response", http.StatusInternalServerError)
+	}
+}
+
 func getUsers(db *sql.DB) []User {
 	users := []User{}
 	var user User
@@ -83,8 +114,6 @@ func getUsers(db *sql.DB) []User {
 
 func getBalances(db *sql.DB, cache *redis.Client) ([]byte, error) {
 	var data []byte
-	key := "balances"
-	exp := 30 * time.Second
 
 	value, err := cache.Get(key).Result()
 	if err == nil {
